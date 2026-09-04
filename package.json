@@ -7,11 +7,11 @@
     "start": "electron .",
     "dev": "electron . --inspect",
     "server": "node server-standalone.js",
-    "build": "electron-builder --win",
-    "build:portable": "electron-builder --win portable",
-    "build:win": "electron-builder --win",
-    "build:mac": "electron-builder --mac --arm64",
-    "build:linux": "electron-builder --linux"
+    "build": "electron-builder --win --publish never",
+    "build:portable": "electron-builder --win portable --publish never",
+    "build:win": "electron-builder --win --publish never",
+    "build:mac": "electron-builder --mac --arm64 --publish never",
+    "build:linux": "electron-builder --linux --publish never"
   },
   "keywords": [
     "photo-transfer",
