@@ -68,7 +68,7 @@ jobs:
                 else acc.push(cle);
               }
             };
-            const fr = {}, en = {};
+            const fr = [], en = [];
             plat(JSON.parse(fs.readFileSync("locales/fr.json", "utf8")), "", fr);
             plat(JSON.parse(fs.readFileSync("locales/en.json", "utf8")), "", en);
             fr.sort(); en.sort();
