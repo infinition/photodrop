@@ -12,6 +12,9 @@ const { resolveDesktopDir } = require('./desktop-dir');
 const PROJECT_ROOT = __dirname;
 const app = express();
 const PORT = process.env.PORT || 3456;
+// Le port reellement ecoute peut differer de PORT quand un appelant passe un
+// port explicite a startServer. Les reponses d'info doivent le refleter.
+let portCourant = null;
 
 // Dossier de depot sur le Bureau, quel que soit l'OS et la langue.
 const DROP_DIR_NAME = 'Photos_Transfert';
@@ -151,7 +154,8 @@ app.get('/api/info', async (req, res) => {
     address: '127.0.0.1'
   };
 
-  const mobileUrl = `http://${primary.address}:${PORT}/mobile`;
+  const portEcoute = portCourant || PORT;
+  const mobileUrl = `http://${primary.address}:${portEcoute}/mobile`;
   let qrCodeData = '';
 
   try {
@@ -174,7 +178,7 @@ app.get('/api/info', async (req, res) => {
     mobileUrl,
     qrCode: qrCodeData,
     targetDir: currentTargetDir,
-    port: PORT
+    port: portEcoute
   });
 });
 
@@ -196,7 +200,20 @@ app.post('/api/config', (req, res) => {
 // de sortir du dossier courant ou de forger un separateur de l'autre OS.
 function nomDeDossierPropre(nom) {
   if (typeof nom !== 'string') return '';
-  const propre = nom.replace(/[/\:*?\"<>|\u0000-\u001f]/g, '').trim();
+  // Aucun separateur, aucune ponctuation hostile a un systeme de fichiers,
+  // aucun caractere de controle. Le balayage caractere par caractere evite
+  // les pieges d'echappement des regex sur Windows.
+  let propre = '';
+  for (const car of nom) {
+    const code = car.codePointAt(0);
+    const interdit =
+      code < 32 ||
+      car === '/' || car === '\\' || car === ':' ||
+      car === '*' || car === '?' || car === '"' ||
+      car === '<' || car === '>' || car === '|';
+    if (!interdit) propre += car;
+  }
+  propre = propre.trim();
   if (!propre || propre === '.' || propre === '..') return '';
   return propre;
 }
@@ -210,7 +227,15 @@ app.post('/api/create-folder', (req, res) => {
     return res.status(400).json({ error: 'Invalid folder name' });
   }
   try {
-    setTargetDir(path.join(currentTargetDir, nom));
+    // Garde-fou: la cible creee reste un enfant direct du dossier
+    // courant, meme si un nom contrefait tentait de remonter dans
+    // l'arborescence.
+    const racine = path.resolve(currentTargetDir);
+    const nouvelleCible = path.resolve(racine, nom);
+    if (nouvelleCible !== racine && !nouvelleCible.startsWith(racine + path.sep)) {
+      return res.status(400).json({ error: 'Folder name escapes the target' });
+    }
+    setTargetDir(nouvelleCible);
     broadcastEvent('config-changed', { targetDir: currentTargetDir });
     return res.json({ success: true, targetDir: currentTargetDir });
   } catch (err) {
@@ -299,6 +324,7 @@ app.get('*', (req, res) => {
 function startServer(port, options) {
   return new Promise((resolve, reject) => {
     const p = port || PORT;
+    portCourant = p;
     const conf = options || {};
     // L'app Electron fournit son vrai Bureau (app.getPath('desktop')). Sans
     // lui, le serveur standalone resout le Bureau selon l'OS et la langue.

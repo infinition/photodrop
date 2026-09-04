@@ -2,7 +2,7 @@ const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const { startServer, DROP_DIR_NAME } = require('../server');
 
-const PORT = 3456;
+const PORT = Number(process.env.PORT) || 3456;
 const estWindows = process.platform === 'win32';
 let mainWindow = null;
 
