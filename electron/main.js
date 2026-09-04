@@ -21,9 +21,9 @@ app.on('second-instance', () => {
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
-    height: 760,
+    height: 860,
     minWidth: 800,
-    minHeight: 580,
+    minHeight: 600,
     frame: false,
     titleBarStyle: 'hidden',
     backgroundColor: '#1a1a1a',

@@ -21,12 +21,26 @@ const DROP_DIR_NAME = 'Photos_Transfert';
 
 // Aucun dossier cible tant que startServer n'a pas tourne: le vrai Bureau est
 // resolu selon le systeme, jamais suppose a partir du nom anglais "Desktop".
+// Deux reperes distincts. La base est le dossier explicitement choisi par
+// l'utilisateur (ou le Bureau par defaut). Le dossier courant est celui qui
+// recoit les photos. "Creer un dossier" cree toujours un enfant de la base,
+// pas du dossier courant: depuis Work1, un nouveau Work2 nait dans Work,
+// jamais dans Work1.
 let currentTargetDir = null;
+let baseTargetDir = null;
 
-function setTargetDir(dir) {
+function creerDossierSiBesoin(dir) {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+  return dir;
+}
+
+function setTargetDir(dir, estBase) {
   currentTargetDir = path.resolve(dir);
-  if (!fs.existsSync(currentTargetDir)) {
-    fs.mkdirSync(currentTargetDir, { recursive: true });
+  creerDossierSiBesoin(currentTargetDir);
+  if (estBase) {
+    baseTargetDir = currentTargetDir;
   }
   return currentTargetDir;
 }
@@ -186,7 +200,8 @@ app.post('/api/config', (req, res) => {
   const { targetDir } = req.body;
   if (targetDir && typeof targetDir === 'string') {
     try {
-      setTargetDir(targetDir);
+      // Choix explicite: ce dossier devient la base des creations suivantes.
+      setTargetDir(targetDir, true);
       broadcastEvent('config-changed', { targetDir: currentTargetDir });
       return res.json({ success: true, targetDir: currentTargetDir });
     } catch (err) {
@@ -227,15 +242,17 @@ app.post('/api/create-folder', (req, res) => {
     return res.status(400).json({ error: 'Invalid folder name' });
   }
   try {
-    // Garde-fou: la cible creee reste un enfant direct du dossier
-    // courant, meme si un nom contrefait tentait de remonter dans
-    // l'arborescence.
-    const racine = path.resolve(currentTargetDir);
+    // La base (dernier dossier choisi) recoit le nouveau dossier, meme si le
+    // dossier courant est deja un sous-dossier cree plus tot. Work1 puis
+    // Work2 naissent ainsi tous deux sous Work, jamais l'un dans l'autre.
+    // Garde-fou: la cible creee reste un enfant direct de la base, meme si un
+    // nom contrefait tentait de remonter dans l'arborescence.
+    const racine = path.resolve(baseTargetDir || currentTargetDir);
     const nouvelleCible = path.resolve(racine, nom);
     if (nouvelleCible !== racine && !nouvelleCible.startsWith(racine + path.sep)) {
       return res.status(400).json({ error: 'Folder name escapes the target' });
     }
-    setTargetDir(nouvelleCible);
+    setTargetDir(nouvelleCible, false);
     broadcastEvent('config-changed', { targetDir: currentTargetDir });
     return res.json({ success: true, targetDir: currentTargetDir });
   } catch (err) {
@@ -328,7 +345,8 @@ function startServer(port, options) {
     const conf = options || {};
     // L'app Electron fournit son vrai Bureau (app.getPath('desktop')). Sans
     // lui, le serveur standalone resout le Bureau selon l'OS et la langue.
-    setTargetDir(conf.targetDir ? conf.targetDir : targetDirParDefaut());
+    // Le dossier initial est aussi la base des creations a venir.
+    setTargetDir(conf.targetDir ? conf.targetDir : targetDirParDefaut(), true);
     const server = app.listen(p, '0.0.0.0', () => {
       const interfaces = getNetworkInterfaces();
       const primary = interfaces[0] ? interfaces[0].address : '127.0.0.1';
