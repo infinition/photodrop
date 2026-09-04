@@ -5,18 +5,31 @@ const QRCode = require('qrcode');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
+const { resolveDesktopDir } = require('./desktop-dir');
 
 // Racine du projet : ce fichier est toujours a la racine
 const PROJECT_ROOT = __dirname;
 const app = express();
 const PORT = process.env.PORT || 3456;
 
-const defaultTargetDir = path.join(os.homedir(), 'Desktop', 'Photos_Transfert');
-let currentTargetDir = defaultTargetDir;
+// Dossier de depot sur le Bureau, quel que soit l'OS et la langue.
+const DROP_DIR_NAME = 'Photos_Transfert';
 
-if (!fs.existsSync(currentTargetDir)) {
-  fs.mkdirSync(currentTargetDir, { recursive: true });
+// Aucun dossier cible tant que startServer n'a pas tourne: le vrai Bureau est
+// resolu selon le systeme, jamais suppose a partir du nom anglais "Desktop".
+let currentTargetDir = null;
+
+function setTargetDir(dir) {
+  currentTargetDir = path.resolve(dir);
+  if (!fs.existsSync(currentTargetDir)) {
+    fs.mkdirSync(currentTargetDir, { recursive: true });
+  }
+  return currentTargetDir;
+}
+
+function targetDirParDefaut() {
+  return path.join(resolveDesktopDir(), DROP_DIR_NAME);
 }
 
 app.use(cors());
@@ -169,10 +182,7 @@ app.post('/api/config', (req, res) => {
   const { targetDir } = req.body;
   if (targetDir && typeof targetDir === 'string') {
     try {
-      if (!fs.existsSync(targetDir)) {
-        fs.mkdirSync(targetDir, { recursive: true });
-      }
-      currentTargetDir = path.resolve(targetDir);
+      setTargetDir(targetDir);
       broadcastEvent('config-changed', { targetDir: currentTargetDir });
       return res.json({ success: true, targetDir: currentTargetDir });
     } catch (err) {
@@ -182,17 +192,54 @@ app.post('/api/config', (req, res) => {
   res.status(400).json({ error: 'Invalid directory path' });
 });
 
-app.post('/api/open-folder', (req, res) => {
-  if (process.platform === 'win32') {
-    exec(`explorer.exe "${currentTargetDir}"`, (error) => {
-      if (error) {
-        return res.status(500).json({ error: error.message });
-      }
-      res.json({ success: true });
-    });
-  } else {
-    res.json({ success: false, message: 'Platform not supported for explorer.exe' });
+// Un nom de dossier n'est jamais un chemin: on retire tout ce qui permettrait
+// de sortir du dossier courant ou de forger un separateur de l'autre OS.
+function nomDeDossierPropre(nom) {
+  if (typeof nom !== 'string') return '';
+  const propre = nom.replace(/[/\:*?\"<>|\u0000-\u001f]/g, '').trim();
+  if (!propre || propre === '.' || propre === '..') return '';
+  return propre;
+}
+
+// Cree un sous-dossier dans le dossier cible courant et y bascule la
+// reception. Le visualiseur cote PC se vide: il ne doit plus montrer les
+// vignettes du dossier precedent.
+app.post('/api/create-folder', (req, res) => {
+  const nom = nomDeDossierPropre(req.body && req.body.name);
+  if (!nom) {
+    return res.status(400).json({ error: 'Invalid folder name' });
   }
+  try {
+    setTargetDir(path.join(currentTargetDir, nom));
+    broadcastEvent('config-changed', { targetDir: currentTargetDir });
+    return res.json({ success: true, targetDir: currentTargetDir });
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
+function ouvrirDossier(dossier, fait) {
+  const ouvreur =
+    process.platform === 'win32'
+      ? 'explorer.exe'
+      : process.platform === 'darwin'
+        ? 'open'
+        : 'xdg-open';
+  execFile(ouvreur, [dossier], (error) => {
+    fait(error || null);
+  });
+}
+
+app.post('/api/open-folder', (req, res) => {
+  if (!currentTargetDir) {
+    return res.status(400).json({ error: 'No target directory' });
+  }
+  ouvrirDossier(currentTargetDir, (error) => {
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    res.json({ success: true });
+  });
 });
 
 app.post('/api/upload', upload.array('photos', 100), (req, res) => {
@@ -249,20 +296,24 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(publicDir, 'index.html'));
 });
 
-function startServer(port) {
+function startServer(port, options) {
   return new Promise((resolve, reject) => {
     const p = port || PORT;
+    const conf = options || {};
+    // L'app Electron fournit son vrai Bureau (app.getPath('desktop')). Sans
+    // lui, le serveur standalone resout le Bureau selon l'OS et la langue.
+    setTargetDir(conf.targetDir ? conf.targetDir : targetDirParDefaut());
     const server = app.listen(p, '0.0.0.0', () => {
       const interfaces = getNetworkInterfaces();
       const primary = interfaces[0] ? interfaces[0].address : '127.0.0.1';
       console.log(`PhotoDrop server listening on port ${p}`);
       console.log(`Local PC: http://localhost:${p}`);
       console.log(`Mobile:   http://${primary}:${p}/mobile`);
-      console.log(`Desktop folder: ${currentTargetDir}`);
+      console.log(`Destination folder: ${currentTargetDir}`);
       resolve(server);
     });
     server.on('error', reject);
   });
 }
 
-module.exports = { startServer, app };
+module.exports = { startServer, app, DROP_DIR_NAME };

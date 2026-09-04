@@ -17,6 +17,11 @@
     "newFolderPlaceholder": "Nom du nouveau dossier...",
     "saveFolderPath": "Enregistrer",
     "cancel": "Annuler",
+    "pickPrompt": "Chemin du dossier de destination :",
+    "nameRequired": "Saisissez un nom de dossier.",
+    "networkError": "Erreur reseau, aucun changement.",
+    "targetChanged": "Dossier cible : {path}",
+    "folderCreated": "Dossier cree : {name}",
     "statusListening": "Serveur actif sur le reseau local.",
     "statusWaiting": "En attente de connexion...",
     "recentTransfers": "Transferts recus",
@@ -24,7 +29,16 @@
     "clearHistory": "Effacer l'historique",
     "fileCount": "{count} fichier(s) recu(s)",
     "totalSize": "Taille totale : {size}",
-    "openedInExplorer": "Dossier ouvert dans l'Explorateur Windows."
+    "openedInExplorer": "Dossier ouvert."
+  },
+  "viewer": {
+    "previous": "Photo precedente",
+    "next": "Photo suivante",
+    "close": "Fermer",
+    "zoomIn": "Zoomer",
+    "zoomOut": "Dezoomer",
+    "reset": "Taille reelle",
+    "unsupported": "Apercu indisponible pour ce type de fichier."
   },
   "mobile": {
     "title": "PhotoDrop Mobile",

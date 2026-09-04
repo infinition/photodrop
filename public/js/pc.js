@@ -1,4 +1,5 @@
 import { i18n } from './i18n.js';
+import { visionneuse } from './viewer.js';
 
 let currentInfo = null;
 let currentTargetDir = '';
@@ -78,7 +79,16 @@ async function loadServerInfo(selectedIp) {
   });
 }
 
-async function applyNewFolder(folderPath) {
+// Change la cible affichee et vide le visualiseur: ses vignettes viennent du
+// dossier precedent et ne correspondent plus au dossier dans lequel les
+// prochaines photos seront deversees.
+function afficherDossierActif(p) {
+  currentTargetDir = p;
+  folderPathDisplay.textContent = p;
+  clearGallery();
+}
+
+async function changerDossier(folderPath) {
   if (!folderPath) return;
   try {
     const res = await fetch('/api/config', {
@@ -88,15 +98,38 @@ async function applyNewFolder(folderPath) {
     });
     const data = await res.json();
     if (data.success) {
-      currentTargetDir = data.targetDir;
-      folderPathDisplay.textContent = data.targetDir;
-      showToast(`Dossier : ${data.targetDir}`);
-      await loadServerInfo(currentInfo ? currentInfo.selectedIp : undefined);
+      afficherDossierActif(data.targetDir);
+      showToast(i18n.t('pc.targetChanged', { path: data.targetDir }));
     } else {
-      showToast(data.error || 'Erreur dossier', true);
+      showToast(data.error || i18n.t('pc.networkError'), true);
     }
   } catch (err) {
-    showToast('Erreur reseau', true);
+    showToast(i18n.t('pc.networkError'), true);
+  }
+}
+
+// Le nom reste un nom: la creation se fait cote serveur, qui connait le vrai
+// chemin du dossier courant et les separateurs de l'OS.
+async function creerSousDossier(name) {
+  if (!name) {
+    showToast(i18n.t('pc.nameRequired'), true);
+    return;
+  }
+  try {
+    const res = await fetch('/api/create-folder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (data.success) {
+      afficherDossierActif(data.targetDir);
+      showToast(i18n.t('pc.folderCreated', { name }));
+    } else {
+      showToast(data.error || i18n.t('pc.networkError'), true);
+    }
+  } catch (err) {
+    showToast(i18n.t('pc.networkError'), true);
   }
 }
 
@@ -155,6 +188,16 @@ function renderReceivedPhoto(photo) {
   card.appendChild(thumbWrap);
   card.appendChild(info);
 
+  // Double clic sur une vignette: la photo s'ouvre en grand dans la
+  // visionneuse, avec zoom, precedente et suivante, clavier directionnel.
+  card.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    const index = receivedPhotos.indexOf(photo);
+    if (index !== -1) {
+      visionneuse.ouvrir(receivedPhotos, index);
+    }
+  });
+
   transfersGrid.insertBefore(card, transfersGrid.firstChild);
   updateStats();
 }
@@ -191,8 +234,7 @@ function setupSse() {
   eventSource.addEventListener('config-changed', (event) => {
     try {
       const data = JSON.parse(event.data);
-      currentTargetDir = data.targetDir;
-      folderPathDisplay.textContent = data.targetDir;
+      afficherDossierActif(data.targetDir);
     } catch (err) {}
   });
 
@@ -245,37 +287,22 @@ async function init() {
     }
   });
 
-  // Choisir dossier
+  // Choisir un dossier existant
   pickFolderBtn.addEventListener('click', async () => {
     if (isElectron) {
       const folder = await window.electronAPI.pickFolder();
-      if (folder) await applyNewFolder(folder);
+      if (folder) await changerDossier(folder);
     } else {
-      const path = prompt('Chemin du dossier de destination :');
-      if (path) await applyNewFolder(path);
+      const chemin = prompt(i18n.t('pc.pickPrompt'));
+      if (chemin) await changerDossier(chemin);
     }
   });
 
-  // Creer un nouveau dossier par nom
+  // Creer un sous-dossier dans le dossier cible courant, puis basculer dessus
   createFolderBtn.addEventListener('click', async () => {
     const name = newFolderName.value.trim();
-    if (!name) {
-      showToast('Saisissez un nom de dossier', true);
-      return;
-    }
-    const baseDir = currentTargetDir
-      ? currentTargetDir.split(/[/\\]/).slice(0, -0).join('\\').replace(/[^/\\]*$/, '')
-      : '';
-    const parent = baseDir || (currentInfo ? currentInfo.targetDir : '');
-
-    // Construire chemin absolu basé sur le parent actuel
-    const parts = currentTargetDir.replace(/\\/g, '/').split('/');
-    parts.pop();
-    parts.push(name);
-    const newPath = parts.join('\\');
-
-    await applyNewFolder(newPath);
     newFolderName.value = '';
+    await creerSousDossier(name);
   });
 
   // Ouvrir dans Explorateur

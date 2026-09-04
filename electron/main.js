@@ -1,8 +1,9 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
-const { startServer } = require('../server');
+const { startServer, DROP_DIR_NAME } = require('../server');
 
 const PORT = 3456;
+const estWindows = process.platform === 'win32';
 let mainWindow = null;
 
 const gotLock = app.requestSingleInstanceLock();
@@ -27,7 +28,9 @@ function createWindow() {
     titleBarStyle: 'hidden',
     backgroundColor: '#1a1a1a',
     show: false,
-    icon: path.join(__dirname, '..', 'public', 'assets', 'icon-512.svg'),
+    icon: estWindows
+      ? path.join(__dirname, '..', 'public', 'assets', 'icon.ico')
+      : path.join(__dirname, '..', 'public', 'assets', 'icon-512.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -94,7 +97,13 @@ ipcMain.handle('app:open-explorer', async (event, folderPath) => {
 
 app.whenReady().then(async () => {
   try {
-    await startServer(PORT);
+    // app.getPath('desktop') renvoie le vrai Bureau de la session, dans la
+    // langue du compte et apres redirection (OneDrive, dossier localise),
+    // sur Windows comme sur macOS et Linux.
+    const bureau = app.getPath('desktop');
+    await startServer(PORT, {
+      targetDir: path.join(bureau, DROP_DIR_NAME)
+    });
   } catch (err) {
     console.error('Server failed to start:', err);
     app.quit();

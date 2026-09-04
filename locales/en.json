@@ -17,6 +17,11 @@
     "newFolderPlaceholder": "New folder name...",
     "saveFolderPath": "Save",
     "cancel": "Cancel",
+    "pickPrompt": "Destination folder path:",
+    "nameRequired": "Enter a folder name.",
+    "networkError": "Network error, nothing changed.",
+    "targetChanged": "Target folder: {path}",
+    "folderCreated": "Folder created: {name}",
     "statusListening": "Server active on local network.",
     "statusWaiting": "Waiting for connection...",
     "recentTransfers": "Received transfers",
@@ -24,7 +29,16 @@
     "clearHistory": "Clear history",
     "fileCount": "{count} file(s) received",
     "totalSize": "Total size: {size}",
-    "openedInExplorer": "Folder opened in Windows Explorer."
+    "openedInExplorer": "Folder opened."
+  },
+  "viewer": {
+    "previous": "Previous photo",
+    "next": "Next photo",
+    "close": "Close",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "reset": "Actual size",
+    "unsupported": "No preview available for this file type."
   },
   "mobile": {
     "title": "PhotoDrop Mobile",

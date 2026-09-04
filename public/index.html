@@ -151,6 +151,44 @@
 
   </main>
 
+  <!-- Visionneuse plein ecran -->
+  <div id="viewer" class="viewer" hidden>
+    <div class="viewer-top">
+      <div class="viewer-meta">
+        <span id="viewerCount" class="viewer-count">0 / 0</span>
+        <span id="viewerName" class="viewer-name"></span>
+      </div>
+      <div class="viewer-tools">
+        <button type="button" class="viewer-tool" id="viewerPrev" data-i18n-title="viewer.previous" aria-label="Previous photo">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button type="button" class="viewer-tool" id="viewerNext" data-i18n-title="viewer.next" aria-label="Next photo">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <span class="viewer-tool-sep"></span>
+        <button type="button" class="viewer-tool" id="viewerZoomOut" data-i18n-title="viewer.zoomOut" aria-label="Zoom out">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+        <button type="button" class="viewer-tool" id="viewerZoomIn" data-i18n-title="viewer.zoomIn" aria-label="Zoom in">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        </button>
+        <button type="button" class="viewer-tool" id="viewerZoomReset" data-i18n-title="viewer.reset" aria-label="Actual size">
+          <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/></svg>
+        </button>
+        <span id="viewerZoomLabel" class="viewer-zoom-label">100%</span>
+        <span class="viewer-tool-sep"></span>
+        <button type="button" class="viewer-tool viewer-tool-close" id="viewerClose" data-i18n-title="viewer.close" aria-label="Close viewer">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="viewer-stage" id="viewerStage">
+      <img id="viewerImg" class="viewer-media" alt="" draggable="false">
+      <video id="viewerVideo" class="viewer-media" controls playsinline></video>
+      <p id="viewerFallback" class="viewer-fallback" hidden></p>
+    </div>
+  </div>
+
   <!-- Toast notification -->
   <div id="toast" class="toast">
     <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
