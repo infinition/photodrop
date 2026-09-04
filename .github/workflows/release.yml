@@ -1,0 +1,198 @@
+name: Release
+
+# Une etiquette v* publie une release avec un installeur par plateforme et le
+# journal des commits depuis l'etiquette precedente. Electron est package sur
+# sa plateforme native: Windows produit NSIS et EXE portable, macOS un DMG
+# Apple Silicon, Linux une AppImage.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  # Garde-fou: aucune release ne doit emporter de dependances, de paquets de
+  # sortie, de dossier de captures temporaires, ni de jeton.
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Aucun artefact ni secret suivi par git
+        run: |
+          set -e
+          if git ls-files | grep -iE '^(dist|node_modules|\.capture-tmp)/|\.env$|\.env\.'; then
+            echo "Dossier interdit suivi par git, publication annulee"
+            exit 1
+          fi
+          if git grep -nIE 'gh[pousr]_[A-Za-z0-9]{20,}' -- . ; then
+            echo "Jeton GitHub en clair dans le depot, publication annulee"
+            exit 1
+          fi
+          echo "Rien a signaler"
+
+  # Pas de suite de tests automatises ici, mais deux controles qui eviteraient
+  # une release cassee: la syntaxe des fichiers serveur et la parite des
+  # traductions entre les deux langues.
+  tests:
+    needs: verifier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Syntaxe des fichiers serveur
+        run: |
+          set -e
+          node --check server.js
+          node --check server-standalone.js
+          node --check desktop-dir.js
+          node --check electron/main.js
+          node --check electron/preload.js
+          node --check tools/capture.mjs
+
+      - name: Parite des traductions
+        run: |
+          node -e '
+            const fs = require("fs");
+            const plat = (o, p, acc) => {
+              for (const k of Object.keys(o)) {
+                const v = o[k];
+                const cle = p ? p + "." + k : k;
+                if (v && typeof v === "object") plat(v, cle, acc);
+                else acc.push(cle);
+              }
+            };
+            const fr = {}, en = {};
+            plat(JSON.parse(fs.readFileSync("locales/fr.json", "utf8")), "", fr);
+            plat(JSON.parse(fs.readFileSync("locales/en.json", "utf8")), "", en);
+            fr.sort(); en.sort();
+            const manqueFr = en.filter((k) => !fr.includes(k));
+            const manqueEn = fr.filter((k) => !en.includes(k));
+            if (manqueFr.length || manqueEn.length) {
+              console.error("Clefs desequilibrees fr/en:", { manqueEn, manqueFr });
+              process.exit(1);
+            }
+            console.log("Traductions coherentes,", fr.length, "clefs");
+          '
+
+  construire:
+    needs: tests
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            construit: build:win
+            nom: windows-x64
+            masque: 'dist/*.exe'
+          # Les runners macos-14 de GitHub sont en Apple Silicon: le DMG
+          # sort directement en arm64, sans emulation.
+          - os: macos-14
+            construit: build:mac
+            nom: macos-apple-silicon
+            masque: 'dist/*.dmg'
+          - os: ubuntu-22.04
+            construit: build:linux
+            nom: linux-x64
+            masque: 'dist/*.AppImage'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Dependances
+        run: npm ci
+
+      # Signer exigerait des secrets par plateforme; les paquets partent non
+      # signes, comme GitPulse. Le README explique la quarantaine macOS.
+      - name: Compiler
+        run: npm run ${{ matrix.construit }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.nom }}
+          path: ${{ matrix.masque }}
+          if-no-files-found: error
+
+  publier:
+    needs: construire
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Tout l'historique et toutes les etiquettes: sans cela on ne peut
+          # pas retrouver l'etiquette precedente pour faire le journal.
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: paquets
+          merge-multiple: true
+
+      - name: Journal depuis l'etiquette precedente
+        shell: bash
+        run: |
+          set -e
+          precedente=$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)
+          if [ -z "$precedente" ]; then
+            echo "First release." > journal.md
+            echo "" >> journal.md
+            git log --pretty=format:'- %s' "${GITHUB_REF_NAME}" | head -50 >> journal.md
+          else
+            echo "Changes since \`${precedente}\`." > journal.md
+            echo "" >> journal.md
+            git log --pretty=format:'- %s' "${precedente}..${GITHUB_REF_NAME}" >> journal.md
+          fi
+          cat >> journal.md <<'NOTE'
+
+          ## Install
+
+          | Platform | File |
+          |---|---|
+          | Windows 10/11 x64 | NSIS installer, or the portable EXE |
+          | macOS Apple Silicon | DMG |
+          | Linux x64 | AppImage |
+
+          Install and launch PhotoDrop. The server starts on port 3456 and the
+          window shows a QR code; scan it with the phone camera and pick photos.
+          They land in a folder on the real desktop, whatever the OS calls it.
+
+          On macOS the app is not signed. Lift the quarantine once:
+
+          ```
+          xattr -cr /Applications/PhotoDrop.app
+          ```
+
+          ---
+
+          ## Installation
+
+          | Plateforme | Fichier |
+          |---|---|
+          | Windows 10/11 x64 | installeur NSIS, ou EXE portable |
+          | macOS Apple Silicon | DMG |
+          | Linux x64 | AppImage |
+
+          Installez et lancez PhotoDrop. Le serveur demarre sur le port 3456 et
+          la fenetre affiche un code QR; scannez-le avec l'appareil photo du
+          telephone et choisissez des photos. Elles arrivent dans un dossier du
+          vrai Bureau, quelle que soit la langue du systeme.
+
+          Sur macOS l'application n'est pas signee. Levez la quarantaine une
+          fois:
+          NOTE
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: PhotoDrop ${{ github.ref_name }}
+          body_path: journal.md
+          files: paquets/**

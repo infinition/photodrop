@@ -1,15 +1,27 @@
 @echo off
-title PhotoDrop - Compilation EXE
-cd /d "c:\DEV\coding\Github\photodrop"
+setlocal
+title PhotoDrop - Compilation
 
-echo ========================================================
-echo   PhotoDrop - Compilation de l'installateur EXE
-echo ========================================================
+rem ===========================================================
+rem  PhotoDrop: compile les installateurs Windows (NSIS et EXE
+rem  portable) dans le dossier dist\.
+rem ===========================================================
+
+cd /d "%~dp0"
+
+where npm >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo   Node.js n'est pas installe, ou npm n'est pas dans le PATH.
+    echo.
+    pause
+    exit /b 1
+)
+
 echo.
-echo Compilation en cours, patientez...
+echo   Compilation des installateurs Windows en cours...
+echo   Les fichiers sortent dans dist\.
 echo.
-npm run build
-echo.
-echo Terminé. Les fichiers EXE sont dans le dossier dist\
-echo.
-pause
+
+call npm run build
+exit /b %ERRORLEVEL%

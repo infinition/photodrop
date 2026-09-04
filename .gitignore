@@ -1,4 +1,18 @@
+# Dependances et paquets de sortie.
 node_modules/
+dist/
+
+# Instantanes de capture temporaires.
+.capture-tmp/
+
+# Fichiers de travail.
+*.log
+*.tmp
+
+# Environnements et secrets.
+.env
+.env.*
+
+# Systeme.
 .DS_Store
 Thumbs.db
-*.log
