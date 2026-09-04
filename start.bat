@@ -6,8 +6,6 @@ echo ========================================================
 echo   PhotoDrop - Transfert Photos Android vers PC
 echo ========================================================
 echo.
-echo Lancement du serveur local...
-timeout /t 1 /nobreak >nul
-start "" http://localhost:3456
-node server.js
+echo Lancement de PhotoDrop...
+npx electron .
 pause

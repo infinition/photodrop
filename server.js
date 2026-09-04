@@ -1,16 +1,14 @@
-import express from 'express';
-import cors from 'cors';
-import multer from 'multer';
-import QRCode from 'qrcode';
-import os from 'os';
-import path from 'path';
-import fs from 'fs';
-import { exec } from 'child_process';
-import { fileURLToPath } from 'url';
+const express = require('express');
+const cors = require('cors');
+const multer = require('multer');
+const QRCode = require('qrcode');
+const os = require('os');
+const path = require('path');
+const fs = require('fs');
+const { exec } = require('child_process');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
+// Racine du projet : ce fichier est toujours a la racine
+const PROJECT_ROOT = __dirname;
 const app = express();
 const PORT = process.env.PORT || 3456;
 
@@ -58,7 +56,12 @@ function getNetworkInterfaces() {
 }
 
 function getSafeFilename(dir, originalName) {
-  let cleanName = Buffer.from(originalName, 'latin1').toString('utf8');
+  let cleanName;
+  try {
+    cleanName = Buffer.from(originalName, 'latin1').toString('utf8');
+  } catch (e) {
+    cleanName = originalName;
+  }
   cleanName = cleanName.replace(/[<>:"/\\|?*]+/g, '_').trim();
   if (!cleanName) {
     cleanName = `photo_${Date.now()}.jpg`;
@@ -143,7 +146,7 @@ app.get('/api/info', async (req, res) => {
       margin: 1,
       width: 340,
       color: {
-        dark: '#0f172a',
+        dark: '#1a1a1a',
         light: '#ffffff'
       }
     });
@@ -198,9 +201,14 @@ app.post('/api/upload', upload.array('photos', 100), (req, res) => {
   }
 
   const savedFiles = req.files.map((file) => {
+    let originalName = file.originalname;
+    try {
+      originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+    } catch (e) {}
+
     const fileInfo = {
       filename: file.filename,
-      originalName: Buffer.from(file.originalname, 'latin1').toString('utf8'),
+      originalName,
       size: file.size,
       mimetype: file.mimetype,
       timestamp: Date.now()
@@ -227,22 +235,34 @@ app.get('/api/preview/:filename', (req, res) => {
   }
 });
 
-app.use('/locales', express.static(path.join(__dirname, 'locales')));
-app.use(express.static(path.join(__dirname, 'public')));
+const publicDir = path.join(PROJECT_ROOT, 'public');
+const localesDir = path.join(PROJECT_ROOT, 'locales');
+
+app.use('/locales', express.static(localesDir));
+app.use(express.static(publicDir));
 
 app.get('/mobile', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'mobile.html'));
+  res.sendFile(path.join(publicDir, 'mobile.html'));
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  const interfaces = getNetworkInterfaces();
-  const primary = interfaces[0]?.address || '127.0.0.1';
-  console.log(`PhotoDrop server listening on port ${PORT}`);
-  console.log(`Local PC: http://localhost:${PORT}`);
-  console.log(`Mobile:   http://${primary}:${PORT}/mobile`);
-  console.log(`Desktop folder: ${currentTargetDir}`);
-});
+function startServer(port) {
+  return new Promise((resolve, reject) => {
+    const p = port || PORT;
+    const server = app.listen(p, '0.0.0.0', () => {
+      const interfaces = getNetworkInterfaces();
+      const primary = interfaces[0] ? interfaces[0].address : '127.0.0.1';
+      console.log(`PhotoDrop server listening on port ${p}`);
+      console.log(`Local PC: http://localhost:${p}`);
+      console.log(`Mobile:   http://${primary}:${p}/mobile`);
+      console.log(`Desktop folder: ${currentTargetDir}`);
+      resolve(server);
+    });
+    server.on('error', reject);
+  });
+}
+
+module.exports = { startServer, app };

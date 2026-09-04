@@ -2,26 +2,39 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#090d16">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#161616">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <link rel="apple-touch-icon" href="/assets/icon-192.svg">
   <link rel="icon" type="image/svg+xml" href="/assets/icon-192.svg">
-  <link rel="manifest" href="/manifest.json">
   <title>PhotoDrop</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <div class="ambient-background">
-    <div class="ambient-blob ambient-blob-1"></div>
-    <div class="ambient-blob ambient-blob-2"></div>
+
+  <!-- Barre de titre custom (frameless Electron) -->
+  <div class="titlebar" id="titlebar">
+    <div class="titlebar-brand">
+      <img src="/assets/icon-192.svg" alt="" class="titlebar-logo" width="20" height="20">
+      <span class="titlebar-name">PhotoDrop</span>
+    </div>
+    <div class="titlebar-spacer"></div>
+    <div class="titlebar-controls" id="titlebarControls" style="display: none;">
+      <button class="titlebar-btn" id="btnMinimize" title="Réduire">
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button class="titlebar-btn" id="btnMaximize" title="Agrandir">
+        <svg viewBox="0 0 24 24" id="maximizeIcon"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      </button>
+      <button class="titlebar-btn close" id="btnClose" title="Fermer">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
   </div>
 
+  <!-- Header applicatif -->
   <header class="app-header">
     <div class="brand-container">
-      <img src="/assets/icon-192.svg" alt="PhotoDrop Logo" class="brand-logo" width="40" height="40">
+      <img src="/assets/icon-192.svg" alt="PhotoDrop" class="brand-logo" width="36" height="36">
       <div>
         <h1 class="brand-title" data-i18n="app.title">PhotoDrop</h1>
         <p class="brand-subtitle" data-i18n="app.subtitle">Transfert direct de photos smartphone vers PC</p>
@@ -35,82 +48,113 @@
     </div>
   </header>
 
+  <!-- Layout principal deux colonnes -->
   <main class="main-content">
-    <section class="card qr-section">
-      <h2 class="card-title">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7"></rect>
-          <rect x="14" y="3" width="7" height="7"></rect>
-          <rect x="14" y="14" width="7" height="7"></rect>
-          <rect x="3" y="14" width="7" height="7"></rect>
-        </svg>
-        <span data-i18n="pc.connectionTitle">Connexion Smartphone</span>
-      </h2>
 
-      <p class="qr-instruction" data-i18n="pc.scanInstruction">
-        Scannez ce QR code avec l'appareil photo de votre smartphone Android pour ouvrir la page de selection.
-      </p>
+    <!-- Panneau gauche -->
+    <aside class="left-panel">
 
-      <div class="qr-frame">
-        <img id="qrImage" class="qr-image" src="" alt="QR Code" width="260" height="260">
+      <!-- Section QR code -->
+      <div class="panel-section">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          <span data-i18n="pc.connectionTitle">Connexion Smartphone</span>
+        </div>
+        <div class="qr-wrap">
+          <p class="qr-instruction" data-i18n="pc.scanInstruction">Scannez ce QR code avec l'appareil photo de votre smartphone pour ouvrir la page de selection.</p>
+          <div class="qr-frame">
+            <img id="qrImage" class="qr-image" src="" alt="QR Code" width="220" height="220">
+          </div>
+          <div class="direct-link-box" style="width: 100%;">
+            <span id="directUrlText" class="direct-link-text">http://...</span>
+            <button id="copyUrlBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="pc.copyUrl">Copier</button>
+          </div>
+        </div>
       </div>
 
-      <div class="network-selector">
-        <label for="interfaceSelect" class="form-label" data-i18n="pc.networkInterface">Interface reseau :</label>
+      <!-- Section reseau -->
+      <div class="panel-section">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          <span data-i18n="pc.networkInterface">Interface reseau</span>
+        </div>
         <select id="interfaceSelect" class="form-select"></select>
       </div>
 
-      <div class="direct-link-box">
-        <span id="directUrlText" class="direct-link-text">http://...</span>
-        <button id="copyUrlBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="pc.copyUrl">Copier l'adresse</button>
-      </div>
-
-      <div class="folder-box" style="width: 100%;">
-        <label class="form-label" data-i18n="pc.targetFolderTitle">Dossier de destination</label>
-        <div id="folderPathDisplay" class="folder-path">...</div>
+      <!-- Section dossier -->
+      <div class="panel-section">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+          <span data-i18n="pc.targetFolderTitle">Dossier de destination</span>
+        </div>
+        <div id="folderPathDisplay" class="folder-current">...</div>
         <div class="folder-actions">
-          <button id="openFolderBtn" class="btn btn-primary" type="button">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-            </svg>
-            <span data-i18n="pc.openFolder">Ouvrir le dossier</span>
+          <button id="pickFolderBtn" class="btn btn-primary btn-full" type="button">
+            <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            <span data-i18n="pc.changeFolder">Choisir un dossier</span>
+          </button>
+          <div class="folder-row">
+            <input id="newFolderName" class="form-input" type="text" placeholder="Nom du nouveau dossier..." data-i18n-placeholder="pc.newFolderPlaceholder">
+            <button id="createFolderBtn" class="btn btn-secondary" type="button">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span data-i18n="pc.createFolder">Creer</span>
+            </button>
+          </div>
+          <button id="openFolderBtn" class="btn btn-ghost btn-full" type="button">
+            <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <span data-i18n="pc.openFolder">Ouvrir dans l'Explorateur</span>
           </button>
         </div>
       </div>
-    </section>
 
-    <section class="card history-card">
-      <div class="history-header">
-        <h2 class="card-title">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-            <polyline points="7 10 12 15 17 10"></polyline>
-            <line x1="12" y1="15" x2="12" y2="3"></line>
+    </aside>
+
+    <!-- Panneau droit : galerie -->
+    <div class="right-panel">
+      <div class="gallery-header">
+        <div class="gallery-title">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
           </svg>
-          <span data-i18n="pc.recentTransfers">Transferts recus</span>
-        </h2>
-        <div class="history-stats">
-          <span id="transfersCount">0</span>
-          <button id="clearHistoryBtn" class="btn btn-secondary btn-sm" style="margin-left: 12px;" type="button" data-i18n="pc.clearHistory">Effacer l'historique</button>
+          <span data-i18n="pc.recentTransfers">Photos recues</span>
+        </div>
+        <div class="gallery-meta">
+          <span id="transfersCount" class="badge">0</span>
+          <button id="clearHistoryBtn" class="btn btn-danger btn-sm" type="button">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            <span data-i18n="pc.clearHistory">Clear</span>
+          </button>
         </div>
       </div>
 
       <div id="transfersGrid" class="transfers-grid">
         <div id="emptyState" class="empty-state" style="grid-column: 1 / -1;">
           <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-            <polyline points="21 15 16 10 5 21"></polyline>
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
           </svg>
           <p data-i18n="pc.noTransfersYet">Aucune photo recue pour l'instant. Scannez le QR code pour commencer.</p>
         </div>
       </div>
-    </section>
+    </div>
+
   </main>
 
+  <!-- Toast notification -->
   <div id="toast" class="toast">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-sky)" stroke-width="2">
-      <polyline points="20 6 9 17 4 12"></polyline>
+    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
     </svg>
     <span id="toastMessage"></span>
   </div>
