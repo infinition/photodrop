@@ -1,14 +1,17 @@
 {
   "name": "photodrop",
-  "version": "1.1.0",
-  "description": "Transfert local de photos depuis smartphone Android vers PC",
+  "version": "1.2.0",
+  "description": "Transfert local de photos depuis un smartphone vers un dossier sur le Bureau, quel que soit l'OS",
   "main": "electron/main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --inspect",
     "server": "node server-standalone.js",
     "build": "electron-builder --win",
-    "build:portable": "electron-builder --win portable"
+    "build:portable": "electron-builder --win portable",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac --arm64",
+    "build:linux": "electron-builder --linux"
   },
   "keywords": [
     "photo-transfer",
@@ -33,14 +36,16 @@
     "productName": "PhotoDrop",
     "copyright": "MIT",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
     "files": [
       "electron/**/*",
       "server.js",
+      "server-standalone.js",
+      "desktop-dir.js",
       "locales/**/*",
       "public/**/*",
-      "node_modules/**/*",
       "package.json"
     ],
     "win": {
@@ -66,6 +71,32 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "PhotoDrop"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.photography"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Graphics",
+      "executableName": "photodrop",
+      "synopsis": "Transfert local de photos smartphone vers PC"
     }
   }
 }
