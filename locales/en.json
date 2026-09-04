@@ -1,0 +1,60 @@
+{
+  "app": {
+    "title": "PhotoDrop",
+    "subtitle": "Direct smartphone to PC photo transfer"
+  },
+  "pc": {
+    "connectionTitle": "Smartphone Connection",
+    "scanInstruction": "Scan this QR code with your Android phone camera to open the photo picker page.",
+    "networkInterface": "Network interface:",
+    "directUrl": "Or open this address directly on your phone:",
+    "copyUrl": "Copy address",
+    "urlCopied": "Address copied to clipboard.",
+    "targetFolderTitle": "Destination folder",
+    "openFolder": "Open folder",
+    "changeFolder": "Change destination",
+    "saveFolderPath": "Save",
+    "cancel": "Cancel",
+    "statusListening": "Server active on local network.",
+    "statusWaiting": "Waiting for connection...",
+    "recentTransfers": "Received transfers",
+    "noTransfersYet": "No photos received yet. Scan the QR code to begin.",
+    "clearHistory": "Clear history",
+    "fileCount": "{count} file(s) received",
+    "totalSize": "Total size: {size}",
+    "openedInExplorer": "Folder opened in Windows Explorer."
+  },
+  "mobile": {
+    "title": "PhotoDrop Mobile",
+    "pageTitle": "Send photos to your PC",
+    "selectPhotos": "Choose photos",
+    "takePhoto": "Take photo",
+    "selectedSummary": "{count} photo(s) selected ({size})",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "startUpload": "Send to PC",
+    "uploading": "Transfer in progress...",
+    "uploadProgress": "Transferring {current} of {total} photos ({percent}%)",
+    "uploadSuccessTitle": "Transfer complete!",
+    "uploadSuccessDesc": "{count} photo(s) were successfully transferred to your PC desktop.",
+    "uploadMore": "Send more photos",
+    "emptySelectionPrompt": "Tap the button below to pick photos from your Android gallery.",
+    "removePhoto": "Remove this photo",
+    "statusPending": "Pending",
+    "statusUploading": "Sending...",
+    "statusDone": "Completed",
+    "statusError": "Error",
+    "errorNetwork": "Connection error with PC. Verify both devices are on the same Wi-Fi.",
+    "errorEmpty": "Please select at least one photo before sending."
+  },
+  "common": {
+    "langFr": "Francais",
+    "langEn": "English",
+    "language": "Language",
+    "loading": "Loading...",
+    "bytes": "B",
+    "kilobytes": "KB",
+    "megabytes": "MB",
+    "gigabytes": "GB"
+  }
+}

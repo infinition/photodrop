@@ -1,0 +1,24 @@
+{
+  "name": "photodrop",
+  "version": "1.0.0",
+  "description": "Transfert local de photos depuis smartphone Android vers PC",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "photo-transfer",
+    "qr-code",
+    "local-network"
+  ],
+  "author": "infinition",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "qrcode": "^1.5.4"
+  }
+}

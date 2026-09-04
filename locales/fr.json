@@ -1,0 +1,60 @@
+{
+  "app": {
+    "title": "PhotoDrop",
+    "subtitle": "Transfert direct de photos smartphone vers PC"
+  },
+  "pc": {
+    "connectionTitle": "Connexion Smartphone",
+    "scanInstruction": "Scannez ce QR code avec l'appareil photo de votre smartphone Android pour ouvrir la page de selection.",
+    "networkInterface": "Interface reseau :",
+    "directUrl": "Ou ouvrez directement cette adresse sur votre telephone :",
+    "copyUrl": "Copier l'adresse",
+    "urlCopied": "Adresse copiee dans le presse-papiers.",
+    "targetFolderTitle": "Dossier de destination",
+    "openFolder": "Ouvrir le dossier",
+    "changeFolder": "Modifier l'emplacement",
+    "saveFolderPath": "Enregistrer",
+    "cancel": "Annuler",
+    "statusListening": "Serveur actif sur le reseau local.",
+    "statusWaiting": "En attente de connexion...",
+    "recentTransfers": "Transferts recus",
+    "noTransfersYet": "Aucune photo recue pour l'instant. Scannez le QR code pour commencer.",
+    "clearHistory": "Effacer l'historique",
+    "fileCount": "{count} fichier(s) recu(s)",
+    "totalSize": "Taille totale : {size}",
+    "openedInExplorer": "Dossier ouvert dans l'Explorateur Windows."
+  },
+  "mobile": {
+    "title": "PhotoDrop Mobile",
+    "pageTitle": "Envoyer des photos vers votre PC",
+    "selectPhotos": "Choisir des photos",
+    "takePhoto": "Prendre une photo",
+    "selectedSummary": "{count} photo(s) selectionnee(s) ({size})",
+    "selectAll": "Tout selectionner",
+    "deselectAll": "Tout deselectionner",
+    "startUpload": "Envoyer vers le PC",
+    "uploading": "Transfert en cours...",
+    "uploadProgress": "Transfert de {current} sur {total} photos ({percent}%)",
+    "uploadSuccessTitle": "Transfert termine !",
+    "uploadSuccessDesc": "{count} photo(s) ont ete transferees avec succes sur votre bureau PC.",
+    "uploadMore": "Envoyer d'autres photos",
+    "emptySelectionPrompt": "Appuyez sur le bouton ci-dessous pour choisir des photos de votre galerie Android.",
+    "removePhoto": "Retirer cette photo",
+    "statusPending": "En attente",
+    "statusUploading": "Envoi...",
+    "statusDone": "Termine",
+    "statusError": "Erreur",
+    "errorNetwork": "Erreur de connexion avec le PC. Verifiez que vous etes connecte au meme Wi-Fi.",
+    "errorEmpty": "Veuillez selectionner au moins une photo avant de lancer l'envoi."
+  },
+  "common": {
+    "langFr": "Francais",
+    "langEn": "English",
+    "language": "Langue",
+    "loading": "Chargement...",
+    "bytes": "o",
+    "kilobytes": "Ko",
+    "megabytes": "Mo",
+    "gigabytes": "Go"
+  }
+}

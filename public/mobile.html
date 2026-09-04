@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#090d16">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="apple-touch-icon" href="/assets/icon-192.svg">
+  <link rel="icon" type="image/svg+xml" href="/assets/icon-192.svg">
+  <link rel="manifest" href="/manifest.json">
+  <title>PhotoDrop Mobile</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/mobile.css">
+</head>
+<body class="mobile-body">
+  <div class="ambient-background">
+    <div class="ambient-blob ambient-blob-1"></div>
+    <div class="ambient-blob ambient-blob-2"></div>
+  </div>
+
+  <header class="mobile-header">
+    <div class="brand-container">
+      <img src="/assets/icon-192.svg" alt="PhotoDrop Logo" width="32" height="32" class="brand-logo">
+      <span class="brand-title" style="font-size: 1.15rem;" data-i18n="mobile.title">PhotoDrop Mobile</span>
+    </div>
+    <select id="langSelect" class="lang-select" aria-label="Langue">
+      <option value="fr">FR</option>
+      <option value="en">EN</option>
+    </select>
+  </header>
+
+  <main class="mobile-container">
+    <div id="pickerView">
+      <div class="picker-actions">
+        <label class="btn-picker" for="galleryInput">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <span data-i18n="mobile.selectPhotos">Choisir des photos</span>
+        </label>
+        <input id="galleryInput" class="hidden-file-input" type="file" multiple accept="image/*,video/*">
+
+        <label class="btn-picker" for="cameraInput">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+            <circle cx="12" cy="13" r="4"></circle>
+          </svg>
+          <span data-i18n="mobile.takePhoto">Prendre une photo</span>
+        </label>
+        <input id="cameraInput" class="hidden-file-input" type="file" accept="image/*" capture="environment">
+      </div>
+
+      <div id="selectionToolbar" class="selection-toolbar" style="display: none;">
+        <span id="selectedSummary" class="selection-counter">0 photo</span>
+        <div class="selection-actions">
+          <button id="toggleAllBtn" class="btn btn-secondary btn-sm" type="button" data-i18n="mobile.deselectAll">Tout deselectionner</button>
+        </div>
+      </div>
+
+      <div id="photoGrid" class="photo-grid"></div>
+
+      <div id="emptyPrompt" class="empty-state">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+        <p data-i18n="mobile.emptySelectionPrompt">Appuyez sur le bouton ci-dessus pour choisir des photos de votre galerie Android.</p>
+      </div>
+    </div>
+
+    <div id="successView" class="success-screen">
+      <div class="success-circle">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+      </div>
+      <h2 class="success-title" data-i18n="mobile.uploadSuccessTitle">Transfert termine !</h2>
+      <p id="successDesc" class="success-desc" data-i18n="mobile.uploadSuccessDesc">Les photos ont ete transferees avec succes.</p>
+      <button id="uploadMoreBtn" class="btn btn-primary" type="button" style="padding: 12px 24px; margin-top: 10px;" data-i18n="mobile.uploadMore">Envoyer d'autres photos</button>
+    </div>
+  </main>
+
+  <div id="bottomBar" class="bottom-bar" style="display: none;">
+    <div id="uploadProgressWrap" class="upload-progress-wrap">
+      <div class="progress-info">
+        <span id="progressText" data-i18n="mobile.uploading">Transfert en cours...</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-track">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+    </div>
+
+    <button id="uploadBtn" class="btn btn-primary btn-upload-bar" type="button">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="19" x2="12" y2="5"></line>
+        <polyline points="5 12 12 5 19 12"></polyline>
+      </svg>
+      <span data-i18n="mobile.startUpload">Envoyer vers le PC</span>
+    </button>
+  </div>
+
+  <div id="toast" class="toast">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-sky)" stroke-width="2">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span id="toastMessage"></span>
+  </div>
+
+  <script type="module" src="/js/mobile.js"></script>
+</body>
+</html>
