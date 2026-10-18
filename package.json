@@ -1,6 +1,6 @@
 {
   "name": "photodrop",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Transfert local de photos depuis un smartphone vers un dossier sur le Bureau, quel que soit l'OS",
   "main": "electron/main.js",
   "scripts": {
