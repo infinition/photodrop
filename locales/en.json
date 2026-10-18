@@ -29,7 +29,9 @@
     "clearHistory": "Clear history",
     "fileCount": "{count} file(s) received",
     "totalSize": "Total size: {size}",
-    "openedInExplorer": "Folder opened."
+    "openedInExplorer": "Folder opened.",
+    "toggleMore": "More",
+    "batchReceived": "{count} photos received"
   },
   "viewer": {
     "previous": "Previous photo",

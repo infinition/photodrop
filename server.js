@@ -289,18 +289,31 @@ app.post('/api/upload', upload.array('photos', 100), (req, res) => {
     return res.status(400).json({ error: 'No files provided' });
   }
 
-  const savedFiles = req.files.map((file) => {
+  let clientMeta = [];
+  try {
+    if (req.body && req.body.metadata) {
+      clientMeta = JSON.parse(req.body.metadata);
+    }
+  } catch (err) {}
+
+  const savedFiles = req.files.map((file, idx) => {
     let originalName = file.originalname;
     try {
       originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
     } catch (e) {}
+
+    const meta =
+      (Array.isArray(clientMeta) && clientMeta[idx]) ||
+      (Array.isArray(clientMeta) && clientMeta.find((m) => m && m.name === file.originalname));
+    const dateCaptured = meta && meta.lastModified ? Number(meta.lastModified) : Date.now();
 
     const fileInfo = {
       filename: file.filename,
       originalName,
       size: file.size,
       mimetype: file.mimetype,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      dateCaptured
     };
     broadcastEvent('photo-received', fileInfo);
     return fileInfo;

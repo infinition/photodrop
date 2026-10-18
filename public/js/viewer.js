@@ -250,6 +250,12 @@ imgEl.addEventListener('dblclick', (e) => {
 btnPrev.addEventListener('click', () => naviguer(-1));
 btnNext.addEventListener('click', () => naviguer(1));
 btnClose.addEventListener('click', fermer);
+viewer.addEventListener('contextmenu', (e) => {
+  if (state.ouvert) {
+    e.preventDefault();
+    fermer();
+  }
+});
 btnZoomIn.addEventListener('click', () => reglerZoom(state.echelle * PAS_ZOOM));
 btnZoomOut.addEventListener('click', () => reglerZoom(state.echelle / PAS_ZOOM));
 btnReset.addEventListener('click', () => {

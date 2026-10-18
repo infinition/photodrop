@@ -18,6 +18,7 @@ const transfersGrid = document.getElementById('transfersGrid');
 const emptyState = document.getElementById('emptyState');
 const transfersCount = document.getElementById('transfersCount');
 const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+const toggleDetailsBtn = document.getElementById('toggleDetailsBtn');
 const langSelect = document.getElementById('langSelect');
 const toast = document.getElementById('toast');
 const toastMessage = document.getElementById('toastMessage');
@@ -40,7 +41,13 @@ function showToast(msg, error = false) {
   }, 3500);
 }
 
-function playArrivalChime() {
+let lastChimeTime = 0;
+function playArrivalChimeThrottled() {
+  const now = Date.now();
+  if (now - lastChimeTime < 1200) {
+    return;
+  }
+  lastChimeTime = now;
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = ctx.createOscillator();
@@ -174,22 +181,43 @@ function renderReceivedPhoto(photo) {
   const metaEl = document.createElement('div');
   metaEl.className = 'transfer-meta';
 
+  const dateVal = photo.dateCaptured || photo.timestamp;
+  const d = new Date(dateVal);
+  const locale = i18n.currentLocale === 'en' ? 'en-US' : 'fr-FR';
+  const dateStr = d.toLocaleDateString(locale, {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+  const timeStr = d.toLocaleTimeString(locale, {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const dateTimeEl = document.createElement('span');
+  dateTimeEl.className = 'transfer-date-time';
+  dateTimeEl.textContent = `${dateStr} ${timeStr}`;
+
   const sizeEl = document.createElement('span');
+  sizeEl.className = 'transfer-size';
   sizeEl.textContent = i18n.formatFileSize(photo.size);
 
-  const timeEl = document.createElement('span');
-  const d = new Date(photo.timestamp);
-  timeEl.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
+  metaEl.appendChild(dateTimeEl);
   metaEl.appendChild(sizeEl);
-  metaEl.appendChild(timeEl);
   info.appendChild(nameEl);
   info.appendChild(metaEl);
   card.appendChild(thumbWrap);
   card.appendChild(info);
 
-  // Double clic sur une vignette: la photo s'ouvre en grand dans la
-  // visionneuse, avec zoom, precedente et suivante, clavier directionnel.
+  // Un simple clic gauche ou un double clic ouvre l'apercu
+  card.addEventListener('click', (e) => {
+    e.preventDefault();
+    const index = receivedPhotos.indexOf(photo);
+    if (index !== -1) {
+      visionneuse.ouvrir(receivedPhotos, index);
+    }
+  });
+
   card.addEventListener('dblclick', (e) => {
     e.preventDefault();
     const index = receivedPhotos.indexOf(photo);
@@ -219,13 +247,29 @@ function clearGallery() {
 function setupSse() {
   const eventSource = new EventSource('/api/events');
 
+  let pendingBatchCount = 0;
+  let batchToastTimer = null;
+
   eventSource.addEventListener('photo-received', (event) => {
     try {
       const photo = JSON.parse(event.data);
       receivedPhotos.unshift(photo);
       renderReceivedPhoto(photo);
-      playArrivalChime();
-      showToast(`${photo.originalName}`);
+      playArrivalChimeThrottled();
+
+      pendingBatchCount++;
+      if (batchToastTimer) {
+        clearTimeout(batchToastTimer);
+      }
+      batchToastTimer = setTimeout(() => {
+        if (pendingBatchCount === 1) {
+          showToast(`${photo.originalName}`);
+        } else if (pendingBatchCount > 1) {
+          showToast(i18n.t('pc.batchReceived', { count: pendingBatchCount }));
+        }
+        pendingBatchCount = 0;
+        batchToastTimer = null;
+      }, 150);
     } catch (err) {
       console.error('Error parsing photo event:', err);
     }
@@ -319,6 +363,30 @@ async function init() {
       }
     }
   });
+
+  // Bascule More pour afficher ou masquer nom, date et heure sous les photos
+  let showDetails = localStorage.getItem('photodrop_show_details') === 'true';
+
+  function appliquerVisibiliteDetails() {
+    if (showDetails) {
+      transfersGrid.classList.add('show-details');
+      toggleDetailsBtn.classList.add('active');
+      toggleDetailsBtn.setAttribute('aria-pressed', 'true');
+    } else {
+      transfersGrid.classList.remove('show-details');
+      toggleDetailsBtn.classList.remove('active');
+      toggleDetailsBtn.setAttribute('aria-pressed', 'false');
+    }
+  }
+
+  if (toggleDetailsBtn) {
+    toggleDetailsBtn.addEventListener('click', () => {
+      showDetails = !showDetails;
+      localStorage.setItem('photodrop_show_details', String(showDetails));
+      appliquerVisibiliteDetails();
+    });
+    appliquerVisibiliteDetails();
+  }
 
   // Clear
   clearHistoryBtn.addEventListener('click', clearGallery);

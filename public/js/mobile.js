@@ -168,9 +168,16 @@ function startUpload() {
   progressPercent.textContent = '0%';
 
   const formData = new FormData();
+  const filesMeta = [];
   itemsToUpload.forEach((item) => {
     formData.append('photos', item.file, item.file.name);
+    filesMeta.push({
+      name: item.file.name,
+      lastModified: item.file.lastModified || Date.now(),
+      size: item.file.size
+    });
   });
+  formData.append('metadata', JSON.stringify(filesMeta));
 
   const xhr = new XMLHttpRequest();
   xhr.open('POST', '/api/upload', true);

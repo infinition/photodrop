@@ -449,6 +449,12 @@ body {
   border-color: rgba(255,255,255,0.15);
 }
 
+.btn-secondary.active {
+  background: var(--accent-orange-glow);
+  border-color: var(--accent-orange);
+  color: var(--accent-orange);
+}
+
 .btn-ghost {
   background: transparent;
   color: var(--text-secondary);
@@ -539,6 +545,7 @@ body {
   padding: 16px;
   display: grid;
   grid-template-columns: repeat(auto-fill, 155px);
+  grid-auto-rows: max-content;
   gap: 12px;
   align-content: start;
   scrollbar-width: thin;
@@ -555,6 +562,8 @@ body {
 
 .transfer-item {
   width: 155px;
+  height: fit-content;
+  min-height: min-content;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -562,7 +571,7 @@ body {
   transition: var(--transition);
   display: flex;
   flex-direction: column;
-  cursor: default;
+  cursor: pointer;
 }
 
 .transfer-item:hover {
@@ -605,10 +614,14 @@ body {
 }
 
 .transfer-info {
+  display: none;
   padding: 8px 10px;
-  display: flex;
   flex-direction: column;
   gap: 3px;
+}
+
+.transfers-grid.show-details .transfer-info {
+  display: flex;
 }
 
 .transfer-name {
@@ -623,8 +636,20 @@ body {
 .transfer-meta {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 6px;
   font-size: 0.7rem;
   color: var(--text-muted);
+}
+
+.transfer-date-time {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transfer-size {
+  flex-shrink: 0;
 }
 
 /* ========= EMPTY STATE ========= */
